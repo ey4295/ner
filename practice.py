@@ -63,6 +63,8 @@ vnv = """
  """
 VAN = nltk.re.compile(vnv, nltk.re.VERBOSE)
 for doc in conll2002.chunked_sents('ned.train'):
+   print (doc)
    for r in nltk.sem.extract_rels('PER', 'ORG', doc,
                                    corpus='conll2002', pattern=VAN):
-       print(nltk.sem.clause(r, relsym="VAN"))
+       #print(nltk.sem.clause(r, relsym="VAN"))
+       print(nltk.rtuple(r, lcon=True, rcon=True))
