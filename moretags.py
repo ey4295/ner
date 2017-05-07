@@ -3,9 +3,12 @@ This is the source code of a tutorial online
 link is:
     http://nlpforhackers.io/named-entity-extraction/
 """
+from nltk import conlltags2tree
+
+
 from nltk import pos_tag, word_tokenize
 from nltk.chunk import conlltags2tree, tree2conlltags, ne_chunk
-
+"""
 sentence = "Mark and John are working at Google."
 ne_tree = ne_chunk(pos_tag(word_tokenize(sentence)))
 
@@ -13,6 +16,7 @@ iob_tagged = tree2conlltags(ne_tree)
 print iob_tagged
 ne_tree = conlltags2tree(iob_tagged)
 print ne_tree
+"""
 
 import os
 import collections
@@ -80,7 +84,7 @@ def read_gmb(corpus_root,max):
 
 
 reader = read_gmb(corpus_root,1000)
-print reader.next()
+#print reader.next()
 
 import pickle
 from collections import Iterable
@@ -183,7 +187,6 @@ class NamedEntityChunker(ChunkParserI):
         # Transform the list of triplets to nltk.Tree format
         return conlltags2tree(iob_triplets)
 
-
 reader = read_gmb(corpus_root,1000)
 data = list(reader)
 training_samples = data[:int(len(data) * 0.9)]
@@ -193,5 +196,13 @@ print "#training samples = %s" % len(training_samples)  # training samples = 558
 print "#test samples = %s" % len(test_samples)  # test samples = 6201
 
 chunker = NamedEntityChunker(training_samples[:5000])
-ner=chunker.parse(pos_tag(word_tokenize(" Jobs was diagnosed with a pancreatic neuroendocrine tumor in 2003 and died on October 5, 2011, of respiratory arrest related to the tumor. ")))
-ner.draw()
+ner=chunker.parse(pos_tag(word_tokenize(" Jobs was diagnosed "
+                                        "with a pancreatic neuroendocrine "
+                                        "tumor in 2003 and died on October "
+                                        "5, 2011, of respiratory arrest related to the tumor. ")))
+#ner.draw()
+#flat_ner=ner.flatten()
+#print (flat_ner)
+#print (type(flat_ner))
+
+print (tree2conlltags(ner))
