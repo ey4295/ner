@@ -52,7 +52,7 @@ connection = pymysql.connect(host='127.0.0.1',
                              password='123456',
                              db='people',
                              cursorclass=pymysql.cursors.DictCursor)
-
+cursor=connection.cursor()
 
 def save_in_mongo(key_vals):
     """
@@ -62,6 +62,7 @@ def save_in_mongo(key_vals):
     :return: id or boolean value for success or not
     """
     collection.insert(key_vals)
+
 
 def clean_data(text):
     """
@@ -79,6 +80,8 @@ def clean_data(text):
     except Exception as err:
         print ('regular expression down')
     return text
+
+
 def ner_analyse(text):
     """
     extract human activity information from text(filted text with only time labeled sent )
@@ -88,7 +91,7 @@ def ner_analyse(text):
     sents = nltk.sent_tokenize(text)
     result = []
     for sent in sents:
-        if not re.match('(.*\d\d\d\d.*)|(.*\d\ds*)',sent):
+        if not re.match('(.*\d\d\d\d.*)|(.*\d\ds*)', sent):
             continue
         entities = chunker.parse(pos_tag(word_tokenize(sent)))
         entities = nltk.tree2conlltags(entities)
@@ -118,19 +121,61 @@ def ner_analyse(text):
 
     return result
 
+
 def ner_analyse_crfs(text):
     """
     Find activity sentence and analyse it
     :param text: doc
     :return: list of entities
     """
-    sents=nltk.sent_tokenize(text)
-    result=[]
+    sents = nltk.sent_tokenize(text)
+    result = []
+    tags = set(['PERSON', 'LOCATION', 'ORGANIZATION', 'DATE'])
     tagger = ner.SocketNER(host='localhost', port=4295, output_format='slashTags')
     for sent in sents:
-        if not re.match('(.*\d\d\d\d.*)|(.*\d\ds*)',sent):
+        if not re.match('(.*\d\d\d\d.*)|(.*\d\ds*)', sent):
             continue
-        entities=tagger.get_entities(sent)
+        # get verb
+
+        pos_tags = pos_tag(word_tokenize(sent))
+        tag = ''
+        VBS = []
+        for pos in pos_tags:
+            if re.match('VB.*', pos[1]):
+                if not tag == '':
+                    tag = tag + ' ' + pos[0]
+                else:
+                    tag += pos[0]
+            elif not tag == '':
+                VBS.append(tag)
+                tag = ''
+        l = len(VBS)
+        new_VBS = []
+        count = random.randint(1, 3)
+        if count>l:
+            count=l
+        indices = random.sample(range(count), count)
+        for index in indices:
+            new_VBS.append(VBS[index])
+        entities = {'VB':'|'.join(new_VBS) }
+
+        # get entities
+        crf_entities = tagger.get_entities(sent)
+        for (key, val) in crf_entities.items():
+            print key
+
+            if key in tags:
+                entities.update({key:'|'.join(val) })
+                """
+            elif key=='O':
+                new_val=[]
+                l=len(val)
+                count=random.randint(1,l+1)
+                indices=random.sample(range(count),count)
+                for index in indices:
+                    new_val.append(val[index])
+                entities.update({key: new_val})
+                """
         result.append(entities)
 
     return result
@@ -143,42 +188,48 @@ def extract_rels(entities_list):
     :return: list of dict
     """
     tags = set(['B-tim', 'B-org', 'B-geo'])
-    rels=[]
+    rels = []
     for entities in entities_list:
         i = 0
         rel = {}
         while i < len(entities):
             entity = entities[i]
-            if entity[2][2:]=='org'or entity[2][2:]=='geo':
-                before_org=False
-            if  re.match('VB.*',entity[1]):
-                key='vb'
-                val=entity[0]
-                j=i+1
-                while re.match('VB.*',entities[j][1]):
-                    val=val+' '+entities[j][0]
-                    j+=1
-                rel.update({key:val})
+            if entity[2][2:] == 'org' or entity[2][2:] == 'geo':
+                before_org = False
+            if re.match('VB.*', entity[1]):
+                key = 'vb'
+                val = entity[0]
+                j = i + 1
+                while re.match('VB.*', entities[j][1]):
+                    val = val + ' ' + entities[j][0]
+                    j += 1
+                rel.update({key: val})
 
             if entity[2] in tags:
                 key = entity[2][2:]
                 val = entity[0]
                 j = i + 1
                 while entities[j][2][0] == 'I':
-                    val =val+' '+ entities[j][0]
+                    val = val + ' ' + entities[j][0]
                     j += 1
                 rel.update({key: val})
-            i+=1
+            i += 1
         rels.append(rel)
     return rels
 
-def save_in_mysql(list):
+
+
+def save_in_mysql(name,list):
     """
     store structural data into mysql
-    :param list: list of tuples
+    :param list: list of dict
     :return: id or boolean value for success or not
     """
-    pass
+    for dict in list:
+        props=re.sub('\'','',str(dict.keys()))
+        sql='insert into activity{0} values(%s,%s,%s,%s)'.format(props)
+        cursor.execute(sql,dict.values())
+
 
 
 def ner_eval(chunker):
@@ -277,13 +328,13 @@ def ner_main(total):
             # print('Name of this page is {0}\nInformation Card\n{1}\nUri:{2}'
             #      .format(name, info, uri))
             try:
-                text=clean_data(text)
+                text = clean_data(text)
                 """
                 result = ner_analyse(text)
                 rels=extract_rels(result)
                 print ('Relations are \n\n\n{0}\n\n\n'.format(rels))
                 """
-                result=ner_analyse_crfs(text)
+                result = ner_analyse_crfs(text)
                 print ('crf analysis result is \n{0}'.format(result))
                 # result.draw()
                 # result= nltk.tree2conlltags(result)

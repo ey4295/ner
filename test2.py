@@ -1,6 +1,8 @@
 """
 test file
 """
+import random
+
 import nltk
 import pymysql
 from nltk import word_tokenize
@@ -56,3 +58,11 @@ import ner
 tagger = ner.SocketNER(host='localhost', port=4295,output_format='slashTags')
 entities = tagger.get_entities("Jobs and Wozniak co-founded Apple in 1976 to sell Wozniak's Apple I personal computer. ")
 print (entities)
+pos=nltk.pos_tag(word_tokenize('Jobs and Wozniak co-founded Apple in 1976 to sell Wozniaks Apple I personal'))
+print (pos)
+a=random.randint(0,2)
+l=range(2)
+print (random.sample(l,5))
+
+print (tuple(entities.keys()))
+print 'fjalsdjfl{0}  {1}'.format(tuple(l))
