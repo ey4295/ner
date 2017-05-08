@@ -3,11 +3,12 @@ This is the source code of a tutorial online
 link is:
     http://nlpforhackers.io/named-entity-extraction/
 """
+import nltk
 from nltk import conlltags2tree
-
 
 from nltk import pos_tag, word_tokenize
 from nltk.chunk import conlltags2tree, tree2conlltags, ne_chunk
+
 """
 sentence = "Mark and John are working at Google."
 ne_tree = ne_chunk(pos_tag(word_tokenize(sentence)))
@@ -23,8 +24,11 @@ import collections
 
 ner_tags = collections.Counter()
 
-corpus_root = "/media/xuqh/ee405623-383a-49b8-9111-b85fddcf3f4d/xuqh/ner2/gmb-2.2.0"  # Make sure you set the proper path to the unzipped corpus
+corpus_root = "/media/maomao/7f986c26-c04a-4a07-b4ec-06862fc46045/xuqh/gmb-2.2.0"  # Make sure you set the proper path to the unzipped corpus
 
+
+# nltk.download('punkt')
+# nltk.download('averaged_perceptron_tagger')
 
 def to_conll_iob(annotated_sentence):
     """
@@ -47,15 +51,15 @@ def to_conll_iob(annotated_sentence):
     return proper_iob_tokens
 
 
-def read_gmb(corpus_root,max):
-    count=0
+def read_gmb(corpus_root, max):
+    count = 0
     for root, dirs, files in os.walk(corpus_root):
         for filename in files:
             if filename.endswith(".tags"):
-                if count>max:
+                if count > max:
                     break
                 else:
-                    count+=1
+                    count += 1
                 with open(os.path.join(root, filename), 'rb') as file_handle:
                     file_content = file_handle.read().decode('utf-8').strip()
                     annotated_sentences = file_content.split('\n\n')
@@ -83,8 +87,8 @@ def read_gmb(corpus_root,max):
                         yield [((w, t), iob) for w, t, iob in conll_tokens]
 
 
-reader = read_gmb(corpus_root,1000)
-#print reader.next()
+reader = read_gmb(corpus_root, 1000)
+# print reader.next()
 
 import pickle
 from collections import Iterable
@@ -167,6 +171,7 @@ def features(tokens, index, history):
         'next-capitalized': nextcapitalized,
     }
 
+
 class NamedEntityChunker(ChunkParserI):
     def __init__(self, train_sents, **kwargs):
         assert isinstance(train_sents, Iterable)
@@ -187,6 +192,8 @@ class NamedEntityChunker(ChunkParserI):
         # Transform the list of triplets to nltk.Tree format
         return conlltags2tree(iob_triplets)
 
+
+"""
 reader = read_gmb(corpus_root,1000)
 data = list(reader)
 training_samples = data[:int(len(data) * 0.9)]
@@ -206,3 +213,4 @@ ner=chunker.parse(pos_tag(word_tokenize(" Jobs was diagnosed "
 #print (type(flat_ner))
 
 print (tree2conlltags(ner))
+"""
