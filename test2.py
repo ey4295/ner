@@ -6,6 +6,8 @@ import random
 import nltk
 import pymysql
 from nltk import word_tokenize
+from numpy import where, ndarray
+from pandas import Series
 from pymongo import MongoClient, cursor
 
 text = """
@@ -51,7 +53,7 @@ effect_rows=cursor.execute(sql,('xuqh',))
 connection.commit()
 cursor.close()
 connection.close()
-"""
+
 
 import ner
 
@@ -60,9 +62,75 @@ entities = tagger.get_entities("Jobs and Wozniak co-founded Apple in 1976 to sel
 print (entities)
 pos=nltk.pos_tag(word_tokenize('Jobs and Wozniak co-founded Apple in 1976 to sell Wozniaks Apple I personal'))
 print (pos)
+
 a=random.randint(0,2)
 l=range(2)
 print (random.sample(l,5))
 
 print (tuple(entities.keys()))
 print 'fjalsdjfl{0}  {1}'.format(tuple(l))
+
+a=set([1,2,3])
+a=a.difference(set([1,2]))
+print a
+a=[1,2,2,3,4]
+print (a.index(2))
+print (random.randint(0,100)/100.00)
+
+import pandas as pd
+pd.read_table('')
+
+a=[1,2,3]
+b=Series(a)*2+4
+print (Series([b,b]))
+
+########################################################################################################
+#
+#
+########################################################################################################
+#twitter api
+from twitter import *
+t=Twitter(auth=OAuth('862644832442789894-2vWBy8SIEUKLKQWRnTvSWO3gv0rsb9F',
+'9PWQN0SMGxkgxmU8O0gP8c3EIelyHO7KyCPcodhRdc6DL'
+                     ,'SKjZV8CKLNnXKCINixEd0ubTc','NKt17D4qjAVDd6E8oeD3TiT7FLjhZFaSqRS8ICcBfSGJUPpQLw'))
+tweets=t.search.tweets(q='steve jobs',count=100)
+statuses=tweets['statuses']
+for status in statuses:
+    nltk.pprint(nltk.word_tokenize(status['text']) )
+
+from collections import Counter
+from sklearn.datasets import make_classification
+from imblearn.over_sampling import     SMOTE
+X, y = make_classification(n_classes=3, class_sep=2,
+weights=[0.1, 0.8,0.1], n_informative=3, n_redundant=1, flip_y=0,
+n_features=20, n_clusters_per_class=1, n_samples=1000, random_state=10)
+print (y)
+print('Original dataset shape {}'.format(Counter(y)))
+sm = SMOTE(random_state=42,kind='borderline1')
+X_res, y_res = sm.fit_sample(X, y)
+print('Resampled dataset shape {}'.format(Counter(y_res)))"""
+# import numpy as np
+# X = np.random.randint(5, size=(6, 100))
+# print (X)
+# y = np.array([1, 2, 3, 4, 5, 6])
+# from sklearn.naive_bayes import MultinomialNB
+# clf = MultinomialNB()
+# clf.fit(X, y)
+# print ('x[2:3]\n\n\n\n\n{0}'.format(X[9:10]))
+# print(clf.predict(X[2:3]))
+
+# import numpy as np
+# sents=['life is happy','you are disapointing','here we go']
+# labels=[1,-1,1]
+# X=np.array([])
+# for sent in sents:
+#     words=word_tokenize(sent)
+#     words=np.array(words)
+#     np.vstack((X,words))
+#
+# print ('X is \n{0}'.format(X))
+
+dict={u'asdfk':3,2:4,5:8}
+print (dict)
+a=[1,2,2,3,4,4]
+print (a[3:-1])
