@@ -35,38 +35,23 @@ from twitter import *
 import moretags
 import pymysql
 
-# corpus
-reader = moretags.read_gmb(moretags.corpus_root, 1000)
-data = list(reader)
-training_samples = data[:int(len(data) * 0.9)]
-test_samples = data[int(len(data) * 0.9):]
-chunker = moretags.NamedEntityChunker(training_samples[:5000])
-print "#training samples = %s" % len(training_samples)  # training samples = 55809
-print "#test samples = %s" % len(test_samples)  # test samples = 6201
-
 # mongoDB
 client = MongoClient()
 db = client.people
 collection = db.properties
 
-# mysql
-connection = pymysql.connect(host='127.0.0.1',
-                             port=3306,
-                             user='root',
-                             password='123456',
-                             db='people',
-                             cursorclass=pymysql.cursors.DictCursor)
-cursor = connection.cursor()
 
-
-def save_in_mongo(key_vals):
+def save_in_mongo(key_vals,is_update):
     """
     store key values in mongodb
     :param key_vals: list of key values
     :param doc name
     :return: id or boolean value for success or not
     """
-    collection.insert(key_vals)
+    if is_update:
+        collection.upate(key_vals)
+    else:
+        collection.insert(key_vals)
 
 
 def clean_data(text):
@@ -87,7 +72,7 @@ def clean_data(text):
     return text
 
 
-def ner_analyse(text):
+def ner_analyse(text, chunker):
     """
     extract human activity information from text(filted text with only time labeled sent )
     :param text: doc
@@ -165,14 +150,12 @@ def ner_analyse_crfs(tagger, text):
         entities = {'VB': '|'.join(new_VBS)}
         # get entities
         crf_entities = tagger.get_entities(sent)
-        print (crf_entities)
         for (key, val) in crf_entities.items():
 
             if key in tags:
                 # trick for special form stanford ner generate
-                val = re.findall('<{}>.*<'.format(key), val)
-
-                entities.update({key: '|'.join(val)})
+                val = re.search('<{}>(.*?)<'.format(key), val[0]).group(1)
+                entities.update({key: val})
                 """
             elif key=='O':
                 new_val=[]
@@ -184,7 +167,6 @@ def ner_analyse_crfs(tagger, text):
                 entities.update({key: new_val})
                 """
         result.append(entities)
-
     return result
 
 
@@ -231,25 +213,38 @@ def save_in_mysql(name, list):
     :param list: list of dict
     :return: id or boolean value for success or not
     """
+    connection = pymysql.connect(host='127.0.0.1',
+                                 port=3306,
+                                 user='root',
+                                 password='123456',
+                                 db='people',
+                                 cursorclass=pymysql.cursors.DictCursor)
+
+    cursor = connection.cursor()
     # save name && get id
-    if list == []:
+    if not list:
         return None
 
-    sql = 'insert into name_list(name) values(%s)'
-    person_id = cursor.execute(sql, name)
+    sql = 'insert into name_list(name) values(%s);'
+    cursor.execute(sql, name)
+    person_id=cursor.lastrowid
     for dict in list:
+        if 'PERSON' not in dict:
+            dict['PERSON'] = re.sub('_', ' ', name)
         var_name, var_value, count = 'person_id', '%s{}', len(dict.keys())
-        for (key, val) in dict:
+        for (key, val) in dict.items():
             var_name += (',' + key)
 
-        var_value.format(',%s' * count)
+        var_value = var_value.format(',%s' * count)
+        sql = 'insert into activity({0}) values({1});'.format(var_name, var_value)
 
-        sql = 'insert into activity({0}) values({1})'.format(var_name, var_value)
         cursor.execute(sql, [person_id] + dict.values())
+    connection.commit()
+    connection.close()
     return person_id
 
 
-def ner_eval(chunker):
+def ner_eval(chunker, test_samples):
     """
     evaluate named entity recognition accuracy
     :return:

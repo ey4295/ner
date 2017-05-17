@@ -10,6 +10,8 @@ from numpy import where, ndarray
 from pandas import Series
 from pymongo import MongoClient, cursor
 
+from ner_tool import save_in_mysql
+
 text = """
 A biography is a detailed description or account of someone's
 life. More than a list of basic facts (education, work, relationships, and death),
@@ -17,16 +19,16 @@ life. More than a list of basic facts (education, work, relationships, and death
  profile or curriculum vitae , a biography presents a subject's life story,
  highlighting various aspects of his or her life, including intimate
  details of experience, and may include an analysis of a subject's personality."""
-tokens = word_tokenize(text)
-sents = nltk.sent_tokenize(text)
-tokens = word_tokenize(str(sents))
-
-st = 'hello 2017 '
-result = nltk.re.match('.*\d\d\d\d.*', st)
-result.group(0)
-print (result.group(0))
-print ('Tokens are {0}'.format(sents))
-print (type(sents[1]))
+# tokens = word_tokenize(text)
+# sents = nltk.sent_tokenize(text)
+# tokens = word_tokenize(str(sents))
+#
+# st = 'hello 2017 '
+# result = nltk.re.match('.*\d\d\d\d.*', st)
+# result.group(0)
+# print (result.group(0))
+# print ('Tokens are {0}'.format(sents))
+# print (type(sents[1]))
 
 """
 client=MongoClient()
@@ -130,7 +132,30 @@ print('Resampled dataset shape {}'.format(Counter(y_res)))"""
 #
 # print ('X is \n{0}'.format(X))
 
-dict={u'asdfk':3,2:4,5:8}
-print (dict)
-a=[1,2,2,3,4,4]
-print (a[3:-1])
+# dict={u'asdfk':3,2:4,5:8}
+# print (dict)
+# a=[1,2,2,3,4,4]
+# print (a[3:-1])
+# pattern='<DATE>(.*?)<'
+# s='In <DATE>2006< >, Lane received a star on the Hollywood Walk of Fame, and in <DATE>2008<'
+# result=nltk.re.search(pattern,s).group(1)
+# print(result)
+
+# l=[{'PERSON':'123','ORGANIZATION':'APPLE'}]
+# name='12345'
+# save_in_mysql(name,l)
+
+########################################################################################################
+# FreqDist Usage
+#
+########################################################################################################
+# a=['a','a','a','b','b','b','b','d']
+# fd= nltk.FreqDist(a)
+# print (fd.most_common(3))
+
+# mongoDB
+client = MongoClient()
+db = client.people
+collection = db.properties
+result=collection.find_one({'Name':'xuqh'})
+nltk.pprint(result)
