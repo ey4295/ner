@@ -24,7 +24,7 @@ import collections
 
 ner_tags = collections.Counter()
 
-corpus_root = "/media/maomao/7f986c26-c04a-4a07-b4ec-06862fc46045/xuqh/gmb-2.2.0"  # Make sure you set the proper path to the unzipped corpus
+corpus_root = "/media/xuqh/ee405623-383a-49b8-9111-b85fddcf3f4d/xuqh/ner2/gmb-2.2.0"  # Make sure you set the proper path to the unzipped corpus
 
 
 # nltk.download('punkt')
@@ -137,38 +137,9 @@ def features(tokens, index, history):
     nextcapitalized = prevword[0] in string.ascii_uppercase
 
     return {
-        'word': word,
-        'lemma': stemmer.stem(word),
-        'pos': pos,
-        'all-ascii': allascii,
-
-        'next-word': nextword,
-        'next-lemma': stemmer.stem(nextword),
-        'next-pos': nextpos,
-
-        'next-next-word': nextnextword,
-        'nextnextpos': nextnextpos,
-
-        'prev-word': prevword,
-        'prev-lemma': stemmer.stem(prevword),
-        'prev-pos': prevpos,
-
-        'prev-prev-word': prevprevword,
-        'prev-prev-pos': prevprevpos,
 
         'prev-iob': previob,
 
-        'contains-dash': contains_dash,
-        'contains-dot': contains_dot,
-
-        'all-caps': allcaps,
-        'capitalized': capitalized,
-
-        'prev-all-caps': prevallcaps,
-        'prev-capitalized': prevcapitalized,
-
-        'next-all-caps': nextallcaps,
-        'next-capitalized': nextcapitalized,
     }
 
 
@@ -193,7 +164,7 @@ class NamedEntityChunker(ChunkParserI):
         return conlltags2tree(iob_triplets)
 
 
-"""
+
 reader = read_gmb(corpus_root,1000)
 data = list(reader)
 training_samples = data[:int(len(data) * 0.9)]
@@ -211,6 +182,6 @@ ner=chunker.parse(pos_tag(word_tokenize(" Jobs was diagnosed "
 #flat_ner=ner.flatten()
 #print (flat_ner)
 #print (type(flat_ner))
+score = chunker.evaluate([conlltags2tree([(w, t, iob) for (w, t), iob in iobs]) for iobs in test_samples[:500]])
+print score
 
-print (tree2conlltags(ner))
-"""

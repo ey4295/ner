@@ -49,7 +49,7 @@ def save_in_mongo(key_vals,is_update):
     :return: id or boolean value for success or not
     """
     if is_update:
-        collection.upate(key_vals)
+        collection.update(key_vals)
     else:
         collection.insert(key_vals)
 
@@ -116,6 +116,7 @@ def ner_analyse_crfs(tagger, text):
     """
     Find activity sentence and analyse it
     :param text: doc
+    :param tagger: stanford ner tagger
     :return: list of entities
     """
     # start server by java -mx1000m -cp stanford-ner.jar edu.stanford.nlp.ie.NERServer     -loadClassifier classifiers/english.muc.7class.distsim.crf.ser.gz     -port 4295 -outputFormat inlineXML

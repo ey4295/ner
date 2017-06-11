@@ -1,16 +1,9 @@
 """
 test file
 """
-import random
-
-import nltk
-import pymysql
-from nltk import word_tokenize
-from numpy import where, ndarray
-from pandas import Series
-from pymongo import MongoClient, cursor
-
-from ner_tool import save_in_mysql
+import ner
+from sklearn.metrics import auc
+from sklearn.metrics import precision_recall_curve
 
 text = """
 A biography is a detailed description or account of someone's
@@ -154,8 +147,18 @@ print('Resampled dataset shape {}'.format(Counter(y_res)))"""
 # print (fd.most_common(3))
 
 # mongoDB
-client = MongoClient()
-db = client.people
-collection = db.properties
-result=collection.find_one({'Name':'xuqh'})
-nltk.pprint(result)
+# client = MongoClient()
+# db = client.people
+# collection = db.properties
+# result=collection.find_one({'Name':'xuqh'})
+# nltk.pprint(result)
+# import matplotlib.pyplot as plt
+#
+# precision, recall, _ = precision_recall_curve([1,-1,1], [1,-1, 1])
+# plt.step(0.45, 0.89)
+#
+# plt.show()
+
+tagger = ner.SocketNER(host='localhost', port=4295, output_format='slashTags')
+result=tagger.get_entities('Steve Jobs died at the year of 2010')
+print (result)

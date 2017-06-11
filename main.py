@@ -1,22 +1,17 @@
 import random
-import re
 import string
-from string import lower
-
-import nltk
-from nltk import word_tokenize, PorterStemmer, FreqDist
-from pandas import json
-from pprint import pprint
 
 import ner
+from nltk import FreqDist
+from nltk.corpus import stopwords
+from pandas import json
 from twitter import *
 from twitter import OAuth
+from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 
 import moretags
 from ner_tool import get_info, save_in_mysql, save_in_mongo, clean_data, ner_analyse_crfs
 from twitter_tool import get_namelist, get_twitter_data, clean_twitter, sentiment_analysis
-
-from nltk.corpus import stopwords
 
 path = '/media/maomao/7f986c26-c04a-4a07-b4ec-06862fc46045/xuqh'
 
@@ -44,9 +39,10 @@ def ner_main(total):
         if name not in names:
             names.add(name)
             print (name)
+            print ('#{}'.format(len(name)))
             try:
                 links, info, text = get_info(uri)
-                save_in_mongo(info,is_update=False)
+                save_in_mongo(info, is_update=False)
             except Exception as err:
                 print(err)
                 continue
@@ -59,8 +55,9 @@ def ner_main(total):
                 rels=extract_rels(result)
                 print ('Relations are \n\n\n{0}\n\n\n'.format(rels))
                 """
+
                 entities = ner_analyse_crfs(tagger, text)
-                print ('crf analysis result is \n{0}'.format(entities))
+                # print ('crf analysis result is \n{0}'.format(entities))
                 # result.draw()
                 # result= nltk.tree2conlltags(result)
                 # print ('Relation entities are like \n{0}'.format(result))
@@ -78,6 +75,7 @@ def twitter_main(num):
     :param num:number of tweets
     :return: [{name:{pos_perc:val},{neg_perc:val},{topic1:{pos_perc:val},{neg_perc:val}}}]
     """
+    sia = SentimentIntensityAnalyzer()
     names = get_namelist()[:5]
     stopws = set(stopwords.words('english'))
     punct = set(string.punctuation)
@@ -92,6 +90,7 @@ def twitter_main(num):
         tweets_iter = twitter_stream.statuses.sample()
         count = 0
         word_dist = []
+        sa_num = {'pos': 0, 'neu': 0, 'neg': 0}
         for tweet in tweets_iter:
             print (count)
             if count > num:
@@ -100,12 +99,21 @@ def twitter_main(num):
             tweet = json.loads(tweet)
             if 'text' in tweet:
                 words = clean_twitter(tweet['text'], str(name), exclude)
+                sa_result = sia.polarity_scores(tweet['text'])
+                if max(sa_result['pos'], sa_result['neu'], sa_result['neg']) == sa_result['pos']:
+                    sa_num['pos'] += 1
+                elif max(sa_result['pos'], sa_result['neu'], sa_result['neg']) == sa_result['neg']:
+                    sa_num['neg'] += 1
+                else:
+                    sa_num['neu'] += 1
                 word_dist = word_dist + words
                 count += 1
+        sa_perc = {'pos': sa_num['pos'] / num, 'neu': sa_num['neu'] / num, 'neg': sa_num['neg'] / num}
         word_dist = FreqDist(word_dist)
         word_top5 = word_dist.most_common(5)
-        mongo_dict = {'Name': name, 'Top5': word_top5}
-        save_in_mongo(mongo_dict,is_update=True)
+        mongo_dict = {'Name': name, 'Top5': word_top5, 'Sentiment': sa_perc}
+        print (mongo_dict)
+        save_in_mongo(mongo_dict, is_update=True)
 
 
 def sa(text):
@@ -121,5 +129,5 @@ def sa(text):
     # todo store result in mongodb
 
 
-# ner_main(10)
-twitter_main(100)
+ner_main(2)
+twitter_main(10)
